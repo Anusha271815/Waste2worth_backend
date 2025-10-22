@@ -1,0 +1,28 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "waste to worth",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start" : "node index.js",
+    "vercel-start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anusha271815/waste2worth.git"
+  },
+  "author": "Anusha kesarwani",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Anusha271815/waste2worth/issues"
+  },
+  "homepage": "https://github.com/Anusha271815/waste2worth#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "mongoose": "^8.19.0",
+    "nodemailer": "^7.0.9"
+  }
+}
