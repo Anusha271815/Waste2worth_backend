@@ -1,8 +1,12 @@
-require('dotenv').config(); // load .env variables
+// Load .env only locally
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const Idea = require("./models/idea"); // make sure this path is correct
+const Idea = require("./models/idea");
 const nodemailer = require("nodemailer");
 
 const app = express();
@@ -13,79 +17,71 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
-async function connectDB() {
+const connectDB = async () => {
+  const mongoURI = process.env.MONGO_URI;
+  if (!mongoURI) {
+    console.error("❌ MONGO_URI not defined!");
+    process.exit(1);
+  }
+
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
+    await mongoose.connect(mongoURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
     console.log("✅ MongoDB connected");
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err);
-    process.exit(1); // stop the server if DB fails
+    process.exit(1);
   }
-}
+};
 
-// Connect to DB immediately
 connectDB();
 
 // Nodemailer setup
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER || "kesarwanianusha58@gmail.com",
-    pass: process.env.EMAIL_PASS || "kykegvywazsydljy", // app password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
 // Routes
-app.get("/", (req, res) => {
-  res.send("Home");
-});
+app.get("/", (req, res) => res.send("Home"));
 
 app.get("/api/ideas", async (req, res) => {
   try {
     const ideas = await Idea.find();
     res.json(ideas);
   } catch (err) {
-    console.error("❌ Error fetching ideas:", err.message);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
 app.post("/api/contact", async (req, res) => {
   const { name, email, message } = req.body;
-  console.log("Received contact form:", name, email, message);
 
   const mailOptions = {
     from: `"Waste2Worth Contact Form" <${email}>`,
-    to: process.env.EMAIL_USER || "your_email@gmail.com",
+    to: process.env.EMAIL_USER,
     subject: `New message from ${name}`,
-    text: `
-You have received a new message from the Waste2Worth contact form:
-
-Name: ${name}
-Email: ${email}
-Message:
-${message}
-    `,
+    text: `Name: ${name}\nEmail: ${email}\nMessage:\n${message}`,
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully");
-    res.status(200).json({ success: true, message: "Message sent and email delivered!" });
-  } catch (error) {
-    console.error("❌ Error sending email:", error);
-    res.status(500).json({ success: false, message: "Failed to send email" });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
   }
 });
 
-// Start server after MongoDB connects
+// Start server
 mongoose.connection.once("open", () => {
-  app.listen(port, () => {
-    console.log(`🚀 Server running at http://localhost:${port}`);
-  });
+  app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
 });
 
 module.exports = app;
